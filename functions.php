@@ -18,9 +18,34 @@
         add_theme_support('title-tag'); //this function enables a feature for your theme.
     }
 
+    function university_adjust_queries($query) {
+        if(!is_admin( ) AND is_post_type_archive('program' ) AND is_main_query( )) {
+            $query->set('orderby', 'title');
+            $query->set('order', 'ASC');
+            $query->set('posts_per_page', -1);
+        }
+       
+        if(!is_admin() AND is_post_type_archive('event') AND is_main_query( )) { //not adding if conditions applies the query universally which is bad.
+            $today = date('Ymd');
+            $query->set('meta_key', 'event_date');
+            $query->set('orderby', 'meta_num_value');
+            $query->set('order', 'ASC');
+            $query->set('meta_query', array(
+            array( 
+                'key' => 'event_date',
+                'compare' => '>=',
+                'value' => $today,
+                'type' => 'numeric' 
+            )
+            ));
+        }
+        
+    }
 
     add_action('wp_enqueue_scripts', 'university_files');
     /*'wp_enqeue_scripts' tells wordpress we want to load some css or javascript.
     The second argument is the name of a function that we want to run.  */
 
     add_action('after_setup_theme', 'university_features');
+
+    add_action('pre_get_posts', 'university_adjust_queries');
