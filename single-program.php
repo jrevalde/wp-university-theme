@@ -24,6 +24,95 @@
         </div>
         
         <div class="generic-content"><?php the_content(); ?></div>
+
+        <?php
+            $relatedProfessors = new WP_Query(array(
+              'posts_per_page' => -1, //-1 this means just show all posts that meet these conditions
+              'post_type' => 'professor', 
+              'orderby' => 'title', //meta means custom field
+              'order' => 'ASC', 
+              'meta_query' => array(
+                array(
+                  'key' => 'related_programs', //this meta query acts like a filter and makes it so the only event/s we see are the ones that has a relation to the program
+                  'compare' => 'LIKE',
+                  'value' => '"' . get_the_ID( ) . '"' //if the array of current porgrams contains the id of the current program post e.g biology, maths etc
+                )
+              )
+            ));
+
+            if ($relatedProfessors->have_posts()) {
+              echo "<hr class='section-break'>";
+
+              echo "<h2 class='headline headline--medium'>" . get_the_title( ). " Professors</h2>";
+
+              echo "<ul class='professor-cards'>";
+              while($relatedProfessors->have_posts()) {
+                $relatedProfessors->the_post();
+            ?>
+              <li class="professor-card__list-item">
+                <a class="professor-card" href="<?php the_permalink(); ?>">
+                  <img class="professor-card__image" src="<?php the_post_thumbnail_url('professorLandscape'); ?>">
+                  <span class="professor-card__name"><?php the_title(); ?></span>
+                </a>
+              </li>
+            <?php
+              }
+              echo "</ul>";
+            }
+
+            //Divy
+            wp_reset_postdata();
+            //the reason we reset postdata is because global post object gets used by both homepage events and related professors things like the_title() will return different values depending
+            //which is accessing the global post object at the time.
+
+            $today = date('Ymd');
+            $homePageEvents = new WP_Query(array(
+              'posts_per_page' => -1, //-1 this means just show all posts that meet these conditions
+              'post_type' => 'event', 
+              'meta_key' => 'event_date',
+              'orderby' => 'meta_value_num', //meta means custom field
+              'order' => 'ASC', 
+              'meta_query' => array(
+                array( //this segment says only show posts that are greater than or equal to todays date
+                  'key' => 'event_date',
+                  'compare' => '>=',
+                  'value' => $today,
+                  'type' => 'numeric' 
+                ),
+                array(
+                  'key' => 'related_programs', //this meta query acts like a filter and makes it so the only event/s we see are the ones that has a relation to the program
+                  'compare' => 'LIKE',
+                  'value' => '"' . get_the_ID( ) . '"' //if the array of current porgrams contains the id of the current program post e.g biology, maths etc
+                )
+              )
+            ));
+
+            if ($homePageEvents->have_posts()) {
+              echo "<hr class='section-break'>";
+
+              echo "<h2 class='headline headline--medium'>Upcoming " . get_the_title( ) . " </h2>";
+
+              while($homePageEvents->have_posts()) {
+                $homePageEvents->the_post();
+            ?>
+
+              <div class="event-summary">
+                <a class="event-summary__date t-center" href="#">
+                  <span class="event-summary__month"><?php $eventDate = new DateTime(get_field('event_date')); echo $eventDate->format('M'); ?></span>
+                  <span class="event-summary__day"><?php echo $eventDate->format('d'); ?></span>
+                </a>
+                <div class="event-summary__content">
+                  <h5 class="event-summary__title headline headline--tiny"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h5>
+                  <p><?php echo wp_trim_words(get_the_content(), 18); ?> <a href="<?php the_permalink(); ?>" class="nu gray">Learn more</a></p>
+                </div>
+              </div>
+
+            <?php
+              }
+            }
+
+            
+          ?>
         
       </div>
 
